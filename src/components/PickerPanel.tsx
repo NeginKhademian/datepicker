@@ -20,7 +20,7 @@ const PickerPanel: FC<PickerPanelProps> = ({
   onSelectMonth,
   onClose,
 }) => (
-  <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-white border rounded-lg shadow-lg p-4 z-10 w-64" ref={React.useRef<HTMLDivElement>(null)}>
+  <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-white border rounded-lg shadow-lg p-4 z-10 w-80" ref={React.useRef<HTMLDivElement>(null)}>
     {/* Year selector */}
     <div className="flex justify-between items-center text-gray-700 mb-2">
       <button onClick={() => onYearChange(panelYear - 1)} className="p-1 rounded">‹</button>
