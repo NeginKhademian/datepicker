@@ -24,6 +24,12 @@ jobs:
       - name: Build static export
         run: yarn predeploy
 
+      - name: 🐞 Debug: list out/ folder
+        run: |
+          echo "========= out/ ========="
+          ls -R out
+          echo "========================"
+
       - name: Disable Jekyll
         run: touch out/.nojekyll
 
