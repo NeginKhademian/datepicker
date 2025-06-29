@@ -1,5 +1,11 @@
 name: Deploy to GitHub Pages
 
+# give this workflow permission to push via GITHUB_TOKEN
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 on:
   push:
     branches:
@@ -11,6 +17,10 @@ jobs:
     steps:
       - name: "Check out code"
         uses: actions/checkout@v3
+        with:
+          # ensure the checkout step leaves us able to push with GITHUB_TOKEN
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: "Set up Node.js & Yarn cache"
         uses: actions/setup-node@v4
@@ -24,7 +34,7 @@ jobs:
       - name: "Build static export"
         run: yarn predeploy
 
-      - name: "Debug: list out/ folder"
+      - name: "🐞 Debug: list out/ folder"
         run: |
           echo "========= out/ ========="
           ls -R out
@@ -37,5 +47,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
           publish_dir: out
-          dotfiles: true
+          force_orphan: true
+          enable_jekyll: false
