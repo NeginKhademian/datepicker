@@ -1,160 +1,194 @@
-const ONE_DAY_TIMESTAMP = 24 * 3600
 
-const JALALI_DAYS_LABELS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
+const ONE_DAY_SECONDS = 24 * 3600
 
-const GREGORIAN_DAYS_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+export const JALALI_DAYS_LABELS: string[] = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج']
+export const GREGORIAN_DAYS_LABELS: string[] = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-export type JalaliDay = {
+export interface TodayDate {
+  day: number
+  month: number
+  year: number
+  ts: number
+}
+
+export interface JalaliMonth {
+  id: number
+  title: string
+}
+
+export interface JalaliDay {
   day: number
   ts: number
   weekday: string
   month: number
   year: number | string
 }
-type FormatOptions = Intl.DateTimeFormatOptions & {
-  numberingSystem?: string
+
+export interface MonthDaysResult {
+  monthName: string
+  year: string
+  days: JalaliDay[]
+  month: number
+  firstDayOfMonthWeekDay: number
 }
-interface FormattedPersianDate {
+
+export interface FormattedPersianDate {
   year: string
   month: string
   day: string
 }
-export const getTodayDate = () => {
-  const now = new Date()
-  const todayUTC = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  )
-  todayUTC.setUTCHours(0, 0, 0, 0)
-  return {
-    day: todayUTC.getUTCDate(),
-    month: todayUTC.getUTCMonth() + 1,
-    year: todayUTC.getUTCFullYear(),
-    ts: Math.floor(todayUTC.getTime() / 1000),
-  }
-}
-export const getJalaliMonths = () => {
-  const JALALI_MONTHS = [
-    {
-      id: 1,
-      title: 'فروردین',
-    },
-    {
-      id: 2,
-      title: 'اردیبهشت',
-    },
-    {
-      id: 3,
-      title: 'خرداد',
-    },
-    {
-      id: 4,
-      title: 'تیر',
-    },
-    {
-      id: 5,
-      title: 'مرداد',
-    },
-    {
-      id: 6,
-      title: 'شهریور',
-    },
-    {
-      id: 7,
-      title: 'مهر',
-    },
-    {
-      id: 8,
-      title: 'آبان',
-    },
-    {
-      id: 9,
-      title: 'آذر',
-    },
-    {
-      id: 10,
-      title: 'دی',
-    },
-    {
-      id: 11,
-      title: 'بهمن',
-    },
-    {
-      id: 12,
-      title: 'اسفند',
-    },
-  ]
-  return JALALI_MONTHS
+
+export interface CurrentDateResult {
+  day: string | number
+  month: string | number
+  year: string | number
 }
 
-export const mapWeekdayToPersian = date => {
-  const WEEK_DAYS_PERSIAN = {
-    یکشنبه: 1,
-    دوشنبه: 2,
-    سه‌شنبه: 3,
-    چهارشنبه: 4,
-    پنجشنبه: 5,
-    جمعه: 6,
-    شنبه: 0,
+
+/** Returns today in UTC at 00:00 as Jalali-aligned Unix ts + Y/M/D */
+export const getTodayDate = (): TodayDate => {
+  const now = new Date()
+  const utcMidnight = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  )
+  utcMidnight.setUTCHours(0, 0, 0, 0)
+
+  return {
+    day: utcMidnight.getUTCDate(),
+    month: utcMidnight.getUTCMonth() + 1,
+    year: utcMidnight.getUTCFullYear(),
+    ts: Math.floor(utcMidnight.getTime() / 1000),
+  }
+}
+
+/** List of 12 Persian month names */
+export const getJalaliMonths = (): JalaliMonth[] => [
+  { id: 1, title: 'فروردین' },
+  { id: 2, title: 'اردیبهشت' },
+  { id: 3, title: 'خرداد' },
+  { id: 4, title: 'تیر' },
+  { id: 5, title: 'مرداد' },
+  { id: 6, title: 'شهریور' },
+  { id: 7, title: 'مهر' },
+  { id: 8, title: 'آبان' },
+  { id: 9, title: 'آذر' },
+  { id: 10, title: 'دی' },
+  { id: 11, title: 'بهمن' },
+  { id: 12, title: 'اسفند' },
+]
+
+/** Map JS weekday index (0=Sunday … 6=Saturday) to Persian name */
+export const mapWeekdayToPersian = (weekdayIndex: number): string => {
+  const map: Record<number, string> = {
+    0: 'شنبه',
     1: 'یکشنبه',
     2: 'دوشنبه',
     3: 'سه‌شنبه',
     4: 'چهارشنبه',
     5: 'پنجشنبه',
     6: 'جمعه',
-    0: 'شنبه',
   }
-  return WEEK_DAYS_PERSIAN[date]
-}
-// Returns month name in Persian
-export const persianMonthNameConvertor = (date: { month: number }) => {
-  const month = date.month
-  return month ? getJalaliMonths()[month - 1].title : ''
+  return map[weekdayIndex]
 }
 
+/** Convert a JS Date to Persian numeric strings (YYYY/MM/DD in fa-IR-u-nu-latn) */
 export const formatPersianDates = (
   date: Date,
-  type: FormatOptions = {
+): FormattedPersianDate => {
+  // embed numbering system in the locale tag
+  const formatted = date.toLocaleDateString('fa-IR-u-nu-latn', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    numberingSystem: 'latn',
-  },
-): FormattedPersianDate => {
-  const formatted = date.toLocaleDateString('fa-IR', type)
+  })
   const [year, month, day] = formatted.split('/')
-
   return { year, month, day }
 }
 
-export const daysInMonth = (month, year) => {
-  return {
-    1: 31,
-    2: 31,
-    3: 31,
-    4: 31,
-    5: 31,
-    6: 31,
-    7: 30,
-    8: 30,
-    9: 30,
-    10: 30,
-    11: 30,
-    12: !((year + 621) % 4) ? 30 : 29,
-  }[month]
+/** Days in a given Jalali month */
+export const daysInJalaliMonth = (
+  month: number,
+  persianYear: number,
+): number => {
+  // Months 1–6 have 31, 7–11 have 30, 12 has 29 or 30 in leap years
+  if (month >= 1 && month <= 6) return 31
+  if (month >= 7 && month <= 11) return 30
+
+  // month === 12
+  const gregYear = persianYear + 621
+  const isLeap = gregYear % 4 === 0
+  return isLeap ? 30 : 29
 }
 
-export const generateCurrentJalaliMonthDays = (inputDate?: Date) => {
-  const date = inputDate || new Date()
-  const startOfMonthTimestamp = getStartOfJalaliMonthTimestamp(date)
-
-  const { days, month, year } = generateJalaliMonthDaysFromTimestamp(
-    startOfMonthTimestamp,
+/**
+ * Calculate the Unix timestamp (in seconds) for
+ * 1 Farvardin of {targetYear}, then offset by month/day.
+ */
+export const calculateBaseTimestamp = (
+  targetYear: number,
+  targetMonth: number,
+  targetDay: number = 1,
+): number => {
+  const gregYear = targetYear + 621
+  const isLeap = gregYear % 4 === 0
+  // Farvardin 1 → March 21 or 22
+  const farvardin1 = new Date(
+    Date.UTC(gregYear, 2, isLeap ? 22 : 21, 0, 0, 0)
   )
-  const weekday = new Date(startOfMonthTimestamp * 1000).getUTCDay()
+  const baseTs = Math.floor(farvardin1.getTime() / 1000)
 
-  // Adjust so Saturday = 1
-  const firstDayOfMonthWeekDay = (weekday % 7) + 1
-  const monthName = getJalaliMonths().find(m => m.id === month)?.title
+  // sum up days of months before targetMonth
+  let daysOffset = 0
+  for (let m = 1; m < targetMonth; m++) {
+    daysOffset += daysInJalaliMonth(m, targetYear)
+  }
+  // then add (targetDay–1)
+  return baseTs + (daysOffset + (targetDay - 1)) * ONE_DAY_SECONDS
+}
+
+/** Start-of-Jalali-month ts for any Date */
+export const getStartOfJalaliMonthTimestamp = (date: Date): number => {
+  const { year, month } = formatPersianDates(date)
+  return calculateBaseTimestamp(+year, +month, 1)
+}
+
+/** Generate all Jalali-day objects from a given start-of-month ts */
+export const generateJalaliMonthDaysFromTimestamp = (
+  startOfMonthTs: number,
+): { days: JalaliDay[]; month: number; year: string } => {
+  const dt = new Date(startOfMonthTs * 1000)
+  const { year, month } = formatPersianDates(dt)
+  const persYear = +year
+  const persMonth = +month
+  const totalDays = daysInJalaliMonth(persMonth, persYear)
+  const days: JalaliDay[] = []
+
+  for (let i = 0; i < totalDays; i++) {
+    const ts = startOfMonthTs + i * ONE_DAY_SECONDS
+    const wd = new Date(ts * 1000).getUTCDay()
+    days.push({
+      day: i + 1,
+      ts,
+      weekday: mapWeekdayToPersian(wd),
+      month: persMonth,
+      year,
+    })
+  }
+
+  return { days, month: persMonth, year }
+}
+
+/** Generate the current month’s Jalali calendar */
+export const generateCurrentJalaliMonthDays = (
+  inputDate: Date = new Date(),
+): MonthDaysResult => {
+  const startTs = getStartOfJalaliMonthTimestamp(inputDate)
+  const { days, month, year } = generateJalaliMonthDaysFromTimestamp(startTs)
+  const firstWeekday = new Date(startTs * 1000).getUTCDay()
+  // In Jalali, Saturday is often treated as weekday 1
+  const firstDayOfMonthWeekDay = ((firstWeekday + 1) % 7) || 7
+  const monthName =
+    getJalaliMonths().find((m) => m.id === month)?.title ?? ''
 
   return {
     monthName,
@@ -164,128 +198,60 @@ export const generateCurrentJalaliMonthDays = (inputDate?: Date) => {
     firstDayOfMonthWeekDay,
   }
 }
+
+/** Shift a (year, month) by Δ months */
 export const adjustJalaliMonth = (
   year: number,
   month: number,
   delta: number,
-) => {
-  let newMonth = month + delta
-  let newYear = year
-
-  while (newMonth < 1) {
-    newMonth += 12
-    newYear -= 1
+): { year: number; month: number } => {
+  let y = year
+  let m = month + delta
+  while (m < 1) {
+    m += 12
+    y--
   }
-  while (newMonth > 12) {
-    newMonth -= 12
-    newYear += 1
+  while (m > 12) {
+    m -= 12
+    y++
   }
-
-  return { year: newYear, month: newMonth }
+  return { year: y, month: m }
 }
 
-export const getStartOfJalaliMonthTimestamp = (date: Date) => {
-  const { year, month } = formatPersianDates(date)
-  return calculateBaseTimestamp(parseInt(year), parseInt(month))
-}
-export const generateJalaliMonthDaysFromTimestamp = (
-  startOfMonthTimestamp: number,
-) => {
-  // Convert timestamp to Jalali year and month
-  const date = new Date(startOfMonthTimestamp * 1000)
-  const { year, month } = formatPersianDates(date)
-
-  const daysInMonths = daysInMonth(parseInt(month), parseInt(year))
-
-  const days = [] as JalaliDay[]
-  for (let i = 0; i < daysInMonths; i++) {
-    const dayTimestamp = startOfMonthTimestamp + i * ONE_DAY_TIMESTAMP
-    const weekdayIndex = new Date(dayTimestamp * 1000).getUTCDay()
-    const weekdayName = mapWeekdayToPersian(weekdayIndex)
-
-    days.push({
-      day: i + 1,
-      ts: dayTimestamp,
-      weekday: weekdayName,
-      month: +month,
-      year,
-    })
-  }
-  return {
-    days,
-    month: +month,
-    year,
-  }
-}
-export const calculateBaseTimestamp = (
-  targetYear: number | string,
-  targetMonth: number | string,
-  targetDay: number | string = 1,
-): number => {
-  // Convert Persian year to Gregorian year
-  const gregorianYear = +targetYear + 621
-  const isLeapYear = gregorianYear % 4 === 0
-
-  // Calculate the timestamp for Farvardin 1st of the Persian year
-  const farvardin1 = new Date(
-    Date.UTC(gregorianYear, 2, isLeapYear ? 22 : 21, 0, 0, 0),
-  ) // March 21st is Farvardin 1st in most cases
-  const farvardin1Timestamp = Math.floor(farvardin1.getTime() / 1000) // Convert to seconds
-
-  // Calculate the number of days passed from Farvardin 1st to the target month
-  let daysSinceFarvardin = 0
-  for (let m = 1; m < +targetMonth; m++) {
-    daysSinceFarvardin += daysInMonth(m, targetYear)
-  }
-
-  // Add the days (in seconds) to Farvardin 1st timestamp
-  const targetMonthTimestamp =
-    farvardin1Timestamp + daysSinceFarvardin * ONE_DAY_TIMESTAMP // Add days in seconds
-
-  // Adjust the timestamp for the specific day of the target month
-  const targetDayTimestamp =
-    targetMonthTimestamp + (+targetDay - 1) * ONE_DAY_TIMESTAMP
-
-  return targetDayTimestamp
-}
-export const getStartOfMonth = (date: Date, type: string = 'GREGORIAN') => {
-  if (type === 'JALALI') {
-    const { year, month } = formatPersianDates(date)
-    return calculateBaseTimestamp(year, month)
-  } else {
-    const year = date.getUTCFullYear()
-    const month = date.getUTCMonth()
-    const startOfMonth = new Date(Date.UTC(year, month, 1))
-    return Math.floor(startOfMonth.getTime() / 1000) // Timestamp in seconds
-  }
-}
-export const getStartOfGregorianMonth = (date: Date) => {
-  const year = date.getUTCFullYear()
-  const month = date.getUTCMonth()
-  const startOfMonth = new Date(Date.UTC(year, month, 1))
-  return Math.floor(startOfMonth.getTime() / 1000) // Timestamp in seconds
+/** Start-of-Gregorian-month ts for any Date */
+export const getStartOfGregorianMonth = (date: Date): number => {
+  const y = date.getUTCFullYear()
+  const m = date.getUTCMonth()
+  const dt = new Date(Date.UTC(y, m, 1))
+  return Math.floor(dt.getTime() / 1000)
 }
 
-// Function to generate all days for the target Persian month
+/** Unified start-of-month (JALALI or GREGORIAN) */
+export const getStartOfMonth = (
+  date: Date,
+  type: 'JALALI' | 'GREGORIAN' = 'GREGORIAN',
+): number =>
+  type === 'JALALI'
+    ? getStartOfJalaliMonthTimestamp(date)
+    : getStartOfGregorianMonth(date)
 
-export const getCurrentDate = (date, type = 'JALALI') => {
-  if (type === 'JALALI') {
-    const { day, month, year } = formatPersianDates(date)
-    return {
-      day,
-      month,
-      year,
+/** Today’s Y/M/D in either calendar */
+export const getCurrentDate = (
+  date: Date,
+  type: 'JALALI' | 'GREGORIAN' = 'JALALI',
+): CurrentDateResult =>
+  type === 'JALALI'
+    ? formatPersianDates(date)
+    : {
+      day: date.getUTCDate(),
+      month: date.getUTCMonth() + 1,
+      year: date.getUTCFullYear(),
     }
-  } else {
-    return {
-      day: date.getDate(),
-      month: date.getMonth() + 1,
-      year: date.getFullYear(),
-    }
-  }
-}
 
-export const getDaysLabels = (type: string) => {
-  if (type === 'JALALI') return JALALI_DAYS_LABELS
-  else return GREGORIAN_DAYS_LABELS
-}
+/** Week-day labels array by calendar */
+export const getDaysLabels = (
+  type: 'JALALI' | 'GREGORIAN',
+): string[] =>
+  type === 'JALALI'
+    ? JALALI_DAYS_LABELS
+    : GREGORIAN_DAYS_LABELS
