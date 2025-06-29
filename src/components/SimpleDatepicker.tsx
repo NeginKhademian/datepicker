@@ -37,7 +37,7 @@ const SimpleDatepicker: FC = () => {
 
   // Calendar data
   const { days: jalaliDays, firstDayOfMonthWeekDay } = generateCurrentJalaliMonthDays(currentDate);
-  const offset = firstDayOfMonthWeekDay - 1;
+  const offset = firstDayOfMonthWeekDay ;
   const months = utilJalaliMonths();
 
   // Handlers
