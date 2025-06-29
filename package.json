@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predeploy": "npm run build && npm run export",
+     "deploy": "gh-pages -d out"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "typescript": "^5",
+    "gh-pages": "^5.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
