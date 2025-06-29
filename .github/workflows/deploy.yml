@@ -9,31 +9,31 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
+      - name: "Check out code"
         uses: actions/checkout@v3
 
-      - name: Set up Node.js & Yarn cache
+      - name: "Set up Node.js & Yarn cache"
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: yarn
 
-      - name: Install dependencies
+      - name: "Install dependencies"
         run: yarn install --frozen-lockfile
 
-      - name: Build static export
+      - name: "Build static export"
         run: yarn predeploy
 
-      - name: 🐞 Debug: list out/ folder
+      - name: "Debug: list out/ folder"
         run: |
           echo "========= out/ ========="
           ls -R out
           echo "========================"
 
-      - name: Disable Jekyll
+      - name: "Disable Jekyll"
         run: touch out/.nojekyll
 
-      - name: Deploy to gh-pages
+      - name: "Deploy to gh-pages"
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
