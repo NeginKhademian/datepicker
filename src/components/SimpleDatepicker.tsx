@@ -37,7 +37,7 @@ const SimpleDatepicker: FC = () => {
 
   // Calendar data
   const { days: jalaliDays, firstDayOfMonthWeekDay } = generateCurrentJalaliMonthDays(currentDate);
-  const offset = firstDayOfMonthWeekDay ;
+  const offset = firstDayOfMonthWeekDay;
   const months = utilJalaliMonths();
 
   // Handlers
@@ -88,7 +88,7 @@ const SimpleDatepicker: FC = () => {
       )}
 
       {/* Calendar */}
-      <CalendarGrid jalaliDays={jalaliDays} offset={offset} />
+      <CalendarGrid jalaliDays={jalaliDays} offset={offset}  />
     </div>
   );
 };
