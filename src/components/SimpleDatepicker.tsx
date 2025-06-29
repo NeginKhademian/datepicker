@@ -8,7 +8,6 @@ import {
   adjustJalaliMonth,
   calculateBaseTimestamp,
 } from '../utils/jalaliUtils';
-
 const SimpleDatepicker: FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -34,6 +33,7 @@ const SimpleDatepicker: FC = () => {
   // Navigate by year
   const selectYear = (newYear: number) => {
     // Preserve current Jalali month/day
+    console.log(newYear)
     const jDay = +currentDate.toLocaleDateString('fa-IR-u-nu-latn', { day: 'numeric' });
     const ts = calculateBaseTimestamp(newYear, pm, jDay);
     setCurrentDate(new Date(ts * 1000));
@@ -48,8 +48,17 @@ const SimpleDatepicker: FC = () => {
     setCurrentDate(new Date(ts * 1000));
   };
 
-  const goToPreviousMonth = () => selectMonth(pm === 1 ? 12 : pm - 1);
-  const goToNextMonth = () => selectMonth(pm === 12 ? 1 : pm + 1);
+  const goToPreviousMonth = () => {
+    const { year: newYear, month: newMonth } = adjustJalaliMonth(py, pm, -1);
+    const ts = calculateBaseTimestamp(newYear, newMonth, 1);
+    setCurrentDate(new Date(ts * 1000));
+  };
+
+  const goToNextMonth = () => {
+    const { year: newYear, month: newMonth } = adjustJalaliMonth(py, pm, +1);
+    const ts = calculateBaseTimestamp(newYear, newMonth, 1);
+    setCurrentDate(new Date(ts * 1000));
+  };
 
   const { days: jalaliDays, firstDayOfMonthWeekDay } = generateCurrentJalaliMonthDays(currentDate);
   const offset = firstDayOfMonthWeekDay - 1; // 1 (Saturday) → index 0
@@ -67,14 +76,14 @@ const SimpleDatepicker: FC = () => {
     <div dir="rtl" className="relative w-full max-w-md mx-auto p-4 border rounded-lg shadow-sm bg-white font-sans">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <button onClick={goToPreviousMonth} className="p-2 hover:bg-gray-100 rounded-full">‹</button>
+        <button onClick={goToPreviousMonth} className="p-2 text-gray-900 hover:bg-gray-100 rounded-full">‹</button>
         <span
           onClick={() => setPickerOpen(!pickerOpen)}
-          className="font-bold text-lg md:text-xl text-gray-900 cursor-pointer"
+          className="font-bold  text-lg md:text-xl text-gray-900 cursor-pointer"
         >
           {displayLabel}
         </span>
-        <button onClick={goToNextMonth} className="p-2 hover:bg-gray-100 rounded-full">›</button>
+        <button onClick={goToNextMonth} className="p-2 text-gray-900 hover:bg-gray-100 rounded-full">›</button>
       </div>
 
       {/* Picker Panel */}
@@ -85,9 +94,9 @@ const SimpleDatepicker: FC = () => {
         >
           {/* Year selector */}
           <div className="flex justify-between items-center mb-2">
-            <button onClick={() => selectYear(py - 1)} className="p-1 rounded hover:bg-gray-100">‹</button>
+            <button onClick={() => selectYear(py - 1)} className="p-1 text-gray-900 rounded ">‹</button>
             <span className="font-medium text-gray-800">{py}</span>
-            <button onClick={() => selectYear(py + 1)} className="p-1 rounded hover:bg-gray-100">›</button>
+            <button onClick={() => selectYear(py + 1)} className="p-1 text-gray-900 rounded ">›</button>
           </div>
           {/* Month grid */}
           <div className="grid grid-cols-4 gap-2 text-center">
